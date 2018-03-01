@@ -32,16 +32,27 @@ verbose: logical. Print dots on console indicating which number of clusters is c
 KmeansGap returns a list with a data frame "data" and the summary statistics
 
 data: data frame. Rows show values corresponding to each number of clusters tested. Columns are as follows
-k: number of clusters tested (all integers between mink and maxk)
-gap: gap index = difference in log dispersal between observed community and mean of null communities
-Egap: mean gap index across null communities 
-sdgap: standard deviation of the gap index across null communities 
-nullquant: 95th quantile of the gap index across null communities
-nullquant90: 90th quantile of the gap index across null communities
-kmaxnullquant: 95th quantile of gap index, taken only among those null communities whose max gap occurred at k clusters
-kmaxnullquant90: 90th quantile of gap index, taken only among those null communities whose max gap occurred at k clusters
-logWk: log of the within-cluster dispersal returned from kmeans()
-ElogWk: mean of the values of logWk across the null communities
+
+$k: number of clusters tested (all integers between mink and maxk)
+
+$gap: gap index = difference in log dispersal between observed community and mean of null communities
+
+$Egap: mean gap index across null communities 
+
+$sdgap: standard deviation of the gap index across null communities 
+
+$nullquant: 95th quantile of the gap index across null communities
+
+$nullquant90: 90th quantile of the gap index across null communities
+
+$kmaxnullquant: 95th quantile of gap index, taken only among those null communities whose max gap occurred at k clusters
+
+$kmaxnullquant90: 90th quantile of gap index, taken only among those null communities whose max gap occurred at k clusters
+
+$logWk: log of the within-cluster dispersal returned from kmeans()
+
+$ElogWk: mean of the values of logWk across the null communities
+
 
 khat: integer. Number of clusters estimated for the observed community = number of clusters at which the gap index was maximal
 
