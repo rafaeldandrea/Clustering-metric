@@ -63,21 +63,21 @@ verbose 			: log 			If TRUE, prints dots on console indicating which number of c
 
 # Value
 data				: data.frame	Rows show values corresponding to each number of clusters tested. Columns are as follows
-				 						k			: num number of clusters tested (all integers between mink and maxk)
+			k			: num number of clusters tested (all integers between mink and maxk)
 										
-                                                                                gap			: num gap index = difference in log dispersal between observed community and mean of null communities
+                        gap			: num gap index = difference in log dispersal between observed community and mean of null communities
 										
-                                                                                Egap		: num mean gap index across null communities 
+                        Egap		: num mean gap index across null communities 
 				 						
-                                                                                sdgap		: num standard deviation of the gap index across null communities 
+                        sdgap		: num standard deviation of the gap index across null communities 
 										
-                                                                                nullquant95	: num 95th quantile of the gap index across null communities
+                        nullquant95	: num 95th quantile of the gap index across null communities
 										
-                                                                                nullquant90	: num 90th quantile of the gap index across null communities
+                        nullquant90	: num 90th quantile of the gap index across null communities
 										
-                                                                                logWk		: num natural logarithm of the within-cluster dispersal returned from kmeans()
+                        logWk		: num natural logarithm of the within-cluster dispersal returned from kmeans()
 										
-                                                                                ElogWk		: num mean of the values of logWk across the null communities
+                        ElogWk		: num mean of the values of logWk across the null communities
 
 nullmodel		: chr 			Either 'draw' or 'shuffle'
 
