@@ -1,42 +1,31 @@
+/* This code is kept available the following github repository:
+https://github.com/rafaeldandrea/Clustering-metric
+*/
+
+/* This code was used to carry out the kmeans algorithm on the output of stochastic niche models in the following manuscript:
+
+D’Andrea, R**, M Riolo, and A Ostling (2019) Generalizing clusters of similar species as a signature of coexistence under competition. PLoS Computational Biology 15:e1006699. DOI: 10.1371/journal.pcbi.1006688
+ */
+
+/* Slightly modified versions of this code (to deal with two dimensional data, and rescaling of trait axes) were also used for the analyses in 
+
+D’Andrea, R**, M Riolo, and A Ostling (In Press) Counting niches: Abundance‐by‐trait patterns reveal niche partitioning in a Neotropical forest. Ecology DOI: 10.1002/ecy.3019 
+
+Those modified versions are available upon request. Email aostling@umich.edu
+ */
+
 /*****
- ** MADE MANY MORE MODIFICATIONS THAN LISTED HERE, BUT KEEPING COMMENTS SO KNOW WHAT STARTED WITH
- ** kmeans.c
- ** - a simple k-means clustering routine
- ** - returns the cluster labels of the data points in an array
- ** - here's an example
- **   extern int *k_means(double**, int, int, int, double, double**);
- **   ...
- **   int *c = k_means(data_points, num_points, dim, 20, 1e-4, 0);
- **   for (i = 0; i < num_points; i++) {
- **      printf("data point %d is in cluster %d\n", i, c[i]);
- **   }
- **   ...
- **   free(c);
- ** Parameters
- ** - array of data points (double **data)
- ** - number of data points (int n)
- ** - dimension (int m)
  **
- ** A Ostling added data_abund array holding species abundances 
- ** One sp abund for each of  the n data points (each will be species in our application)
- ** - array of abundances (int *data_abund) of length n 
- ** In principle we could make those non-integer 
- ** but then have to change the counts array below to double 
- ** Not sure if code line 
- ** c[i][j] = counts[i] ? c1[i][j] / counts[i] : c1[i][j];
- ** relies on counts being integer as I am not used to this notation
  **
- ** - desired number of clusters (int k)
- ** - error tolerance (double t)
- **   - used as the stopping criterion, i.e. when the sum of
- **     squared euclidean distance (standard error for k-means)
- **     of an iteration is within the tolerable range from that
- **     of the previous iteration, the clusters are considered
- **     "stable", and the function returns
- **   - a suggested value would be 0.0001
- ** - output address for the final centroids (double **centroids)
- **   - user must make sure the memory is properly allocated, or
- **     pass the null pointer if not interested in the centroids
+ ** A Ostling created this code in 2018, using as inspiration code created on 2005-04-12 by
+ ** - Roger Zhang (rogerz@cs.dal.ca)
+ ** which thre seems to be a varion of acvailable at:
+ ** http://labshare.cshl.edu/shares/hannonlab/www-data/DelasVives_RoeTFs_mm9/libbeato-master/beato/cluster.c
+ ** 
+ **The code I had stated the location http://cs.smu.ca/~r_zhang/code/kmeans.c but it no longer seems to be available there
+ **
+ **
+ ** That code had the following References and Notes:
  ** References
  ** - J. MacQueen, "Some methods for classification and analysis
  **   of multivariate observations", Fifth Berkeley Symposium on
@@ -50,15 +39,36 @@
  **   either directly or indirectly by using this function.
  ** - anybody is free to do whatever he/she wants with this
  **   function as long as this header section is preserved.
- ** Created on 2005-04-12 by
- ** - Roger Zhang (rogerz@cs.dal.ca)
- ** Modifications
- ** -
- ** Last compiled under Linux with gcc-3
+ **
+ **
  */
- /*
- ** src: http://cs.smu.ca/~r_zhang/code/kmeans.c
- */
+/*A Ostling Notes*/
+ /* This particular code reads in a list of species' trait values and abundances. It is set up for a single trait--the analysis is one dimensional, though it could easily be generalized as in the cluster.c code mentioned above. */
+
+/* It is actually set up to run on a cluster and read in a series of such files and analyze them, ranging from stnum_NULL.txt to ednnum_NULL.txt. Also, if it is instructed to read in 1_NULL.txt it will also analyze 0_NULL.txt. This structure was set up so that 0_NULL.txt was the actual data file,a nd 1_NULL.txt through x_NULL.txt where the x nulls generated from the data in some way controlled in other code. In some other uses of this kmeans code, for analysis of field data, a given job would only analyze part of the nulls for the data. As you will see for the cluster scripts used for the analysis of outputs of simulations, we used 100 nulls and analyzed them all in one job.*/
+
+/* For a given trait abundance file it carries out the kmeans algorithm to find the best arrangment of species into a specified number of clusters. It interprets each species as n points at the species' trait value for the purposes of the kmeans calculations, but manipulates those points all together for efficiency (where normally the kmeans algorithm works point by point because when it is not species' abundance data it is unlikely for two points to be at exactly the same position). In this case it looks for the best arrangement for between 1 and 20 clusters. 
+
+   /* Note our approach takes a user specified of starting points for the cluster centers that depends on the number of clusters being searched for. These are listed in a file nstart.txt We determined these nubmers of starting points needed in advance from test runs to see when the dispersion index became saturated as the number of starting points was increased more. This did seem to depend a bit on the particular trait abundance data, but we chose values that seemed to give saturation across all of the community dynamics we ran in the simulations. We found that using a substantial number of staring points was important for cluster detection.*/
+
+/* Note for each run of the kmeans algorithm from a given starting point it continues to look for a cluster arrangement that is better until the difference in dispersion from one iteration through the algorithm to the next is smaller than a tolerance t (which we normally set to 0.0000001), or until it has done iter_MAX iterations.*/
+
+/* Note that because this was set up to run on a cluster as part of a large job array, it was also set to read the particular data directory to use for this particular job from a path_file.*/
+
+/* Some notes about the dispersion metrics calculated in the code: */
+
+/*"best_dispersion" is the Wk defined in Eq. 2 of Tibhsirani et al. 2001. Note their explanation of the formula is a bit confusing. The formula shows Wk defined as the sume over clusters of 1/2n_r Dr, where Dr is the sum of distances between all points within the rth cluster and n_r is the number of points in it. However, then it is noted that Wk is also the sum over clusters of the squared distances from the cluster center, which is the way we calculate it here. The key thing to realize to see the quivalence of these statement is that the suym over the squared distances from the cluster center is the same thing as 1/2nr Dr. Just expanding out the relevant quantites in the sum and doing some algebra will help you see it. Note that in making use of Wk and the Gap method described in Tibshirani we actually look for the maximum Gap value in the range of cluster numbers we examined, rather than the smallest number of clusters with a local peak Gap value. We found that using the peak Gap value worked better. See D'Andrea et al. 2019 and 2020 cited above for more info.*/
+
+/* "best_dispersion_yan_ye" is the modified disperstion index suggested by Yan and Ye (2007). Specifically it is the dispersion defined in their Equation 5, but calculated by instead calcualting the sum of squared distances from all points to the center of the cluster, i.e. the equivalent of 1/2n_r Dr, and then dividing that by n_r-1 and summing over the clusters. */
+
+/*References
+Tibshirani R, Walther G, Hastie T. Estimating the number of clusters in a data set via the gap statistic.
+Journal of the Royal Statistical Society: Series B (Statistical Methodology). 2001; 63:411–423. https://
+doi.org/10.1111/1467-9868.00293
+
+Yan M, Ye K. Determining the Number of Clusters Using the Weighted Gap Statistic. Biometrics 2007; 6: 1031-1037. http://www.jstor.org/stable/4541456
+
+*/
 
 #include <stdlib.h>
 #include <assert.h>
@@ -287,7 +297,7 @@ int main(int argc, char *argv[])
 	/*      printf("it took %d iterations\n", iter);*/
 	if (iter==iter_MAX) {
 	  l--;
-	  printf("Hit maximum iterations and still did not converge: dispersion = %f, old_dispersion=%f\n", dispersion, old_dispersion);
+	  printf("Hit maximum iterations and still did not converge: dispersion = %f, old _dispersion=%f\n", dispersion, old_dispersion);
 	}
 	/*      printf("now it is %f and its log is %f\n", best_dispersion, log(best_dispersion));*/
 	/*      printf("the best cluster centers are: ");
@@ -356,7 +366,6 @@ int get_rand_integ_intvl(int x, int y)
 
   /* an incorrect modification */
   /*  return (int) ceil(toss*(y-x)) + x;*/
-
 
 
 
