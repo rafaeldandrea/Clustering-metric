@@ -1,10 +1,14 @@
 /* This code is kept available the following github repository:
 https://github.com/rafaeldandrea/Clustering-metric
-*/
 
+
+*/
 /* This code was used to carry out the kmeans algorithm on the output of stochastic niche models in the following manuscript:
 
 D’Andrea, R**, M Riolo, and A Ostling (2019) Generalizing clusters of similar species as a signature of coexistence under competition. PLoS Computational Biology 15:e1006699. DOI: 10.1371/journal.pcbi.1006688
+
+Also supplied at the github repository is R code that was used before analyses were being finalized. This C code was written to finalize analyses using a larger number of starting points, which required faster computation on a cluster.
+
  */
 
 /* Slightly modified versions of this code (to deal with two dimensional data, and rescaling of trait axes) were also used for the analyses in 
